@@ -1,13 +1,17 @@
 package com.aks.notification
 
 import android.app.*
-import android.content.Context
+import android.content.ContentValues
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.messaging.FirebaseMessaging
 
 
 class MainActivity : AppCompatActivity() {
@@ -16,7 +20,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val button = findViewById<Button>(R.id.btnSend)
-
+        Toast.makeText(
+            this,
+            getSharedPreferences("My_pref", MODE_PRIVATE).getString("id","Not found").toString(),
+            Toast.LENGTH_SHORT
+        ).show()
         button.setOnClickListener {
             val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             val intent = Intent(this, NotificationActivity::class.java)
@@ -54,5 +62,19 @@ class MainActivity : AppCompatActivity() {
                 notification.flags or (Notification.FLAG_ONGOING_EVENT or Notification.FLAG_NO_CLEAR)
             manager.notify(1, notification)
         }
+
+        generateToken()
+    }
+
+    private fun generateToken(){
+        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w(ContentValues.TAG, "Fetching FCM registration token failed", task.exception)
+                return@OnCompleteListener
+            }
+            // Get new FCM registration token
+            val token = task.result
+            Log.e("TAG", "generateToken: $token" )
+        })
     }
 }
